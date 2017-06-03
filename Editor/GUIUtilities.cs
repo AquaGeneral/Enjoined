@@ -11,14 +11,24 @@ namespace JesseStiller.Enjoined {
     public static class GUIUtilities {
         public static void DrawConnectedAnchorProperty(SerializedProperty connectedAnchor, SerializedProperty autoConfigureConnectedAnchor) {
             Rect controlRect = EditorGUILayout.GetControlRect();
-            Rect fillRect = EditorGUI.PrefixLabel(controlRect, new GUIContent("Connected Anchor"));
-            fillRect.x -= 1;
-            float autoLabelWidth = GUI.skin.toggle.CalcSize(new GUIContent("Auto")).x;
 
-            bool newAutoConfigure = EditorGUI.ToggleLeft(
-                new Rect(fillRect.x - autoLabelWidth, controlRect.y, autoLabelWidth, controlRect.height), 
-                "Auto", autoConfigureConnectedAnchor.boolValue);
+            GUIStyle labelZeroRightPadding = new GUIStyle(GUI.skin.label);
+            labelZeroRightPadding.padding.right = 0;
 
+            GUIStyle labelWithoutPadding = new GUIStyle(GUI.skin.label);
+            labelWithoutPadding.padding.left = labelWithoutPadding.padding.right = 0;
+
+            GUIStyle toggleWithoutPadding = new GUIStyle(GUI.skin.toggle);
+            toggleWithoutPadding.padding.right = 0;
+
+            float connectedAnchorLabelWidth = labelZeroRightPadding.CalcSize(new GUIContent("Connected Anchor (")).x;
+            float rightBracketWidth = labelWithoutPadding.CalcSize(new GUIContent(")")).x;
+            float autoLabelWidth = toggleWithoutPadding.CalcSize(new GUIContent("Auto")).x;
+
+            GUI.Label(controlRect, "Connected Anchor (", labelZeroRightPadding);
+            bool newAutoConfigure = GUI.Toggle(new Rect(controlRect.x + connectedAnchorLabelWidth, controlRect.y, autoLabelWidth, controlRect.height), autoConfigureConnectedAnchor.boolValue, "Auto", toggleWithoutPadding);
+            GUI.Label(new Rect(controlRect.x + connectedAnchorLabelWidth + autoLabelWidth, controlRect.y, controlRect.width, controlRect.height), ")", labelWithoutPadding);
+            
             if(autoConfigureConnectedAnchor.boolValue != newAutoConfigure) {
                 autoConfigureConnectedAnchor.boolValue = newAutoConfigure;
 
@@ -29,9 +39,22 @@ namespace JesseStiller.Enjoined {
                     connectedAnchor.vector3Value = joint.connectedAnchor;
                 }
             }
-            
-            using(new EditorGUI.DisabledScope(autoConfigureConnectedAnchor.boolValue)) {
+
+            Rect fillRect = new Rect(controlRect);
+            fillRect.xMin = EditorGUIUtility.labelWidth + 13f;
+            using(new EditorGUI.DisabledGroupScope(autoConfigureConnectedAnchor.boolValue)) {
                 EditorGUI.PropertyField(fillRect, connectedAnchor, GUIContent.none);
+            }
+
+            EditorGUILayout.Space();
+
+            Rect controlRect2 = EditorGUILayout.GetControlRect();
+            Rect fillRect2 = EditorGUI.PrefixLabel(controlRect2, new GUIContent("Connected Anchor Mode"));
+            autoConfigureConnectedAnchor.boolValue = GUI.Toolbar(fillRect2, autoConfigureConnectedAnchor.boolValue ? 1 : 0, new GUIContent[] { new GUIContent("User"), new GUIContent("Automatic") }, EditorStyles.radioButton) == 1;
+            using(new EditorGUI.DisabledGroupScope(autoConfigureConnectedAnchor.boolValue)) {
+                EditorGUI.indentLevel = 1;
+                EditorGUILayout.PropertyField(connectedAnchor);
+                EditorGUI.indentLevel = 0;
             }
         }
 
