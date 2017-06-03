@@ -12,6 +12,7 @@ namespace JesseStiller.Enjoined {
         public static void DrawConnectedAnchorProperty(SerializedProperty connectedAnchor, SerializedProperty autoConfigureConnectedAnchor) {
             Rect controlRect = EditorGUILayout.GetControlRect();
             Rect fillRect = EditorGUI.PrefixLabel(controlRect, new GUIContent("Connected Anchor"));
+            fillRect.x -= 1;
             float autoLabelWidth = GUI.skin.toggle.CalcSize(new GUIContent("Auto")).x;
 
             bool newAutoConfigure = EditorGUI.ToggleLeft(
