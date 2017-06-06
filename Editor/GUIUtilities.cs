@@ -41,5 +41,30 @@ namespace JesseStiller.Enjoined {
                 GUI.enabled = true;
             }
         }
+
+        internal static bool FullClickRegionFoldout(string header, bool folded) {
+            EditorGUILayout.Foldout(true, "Test");
+
+            Rect controlRect= EditorGUILayout.GetControlRect();
+            Rect clickRect = new Rect(controlRect);
+            float defaultLeftMargin = clickRect.xMin;
+            clickRect.xMin = 0f;
+
+            Rect labelRect = new Rect(controlRect);
+            labelRect.x += 11f;
+
+            GUI.Label(labelRect, header);
+            
+            if(Event.current.type == EventType.Repaint) {
+                EditorStyles.foldout.Draw(new Rect(controlRect.x, clickRect.y, EditorGUIUtility.labelWidth - EditorGUI.indentLevel, clickRect.height), false, false, folded, false);
+            }
+
+            Event currentEvent = Event.current;
+            if(currentEvent.type == EventType.MouseDown && clickRect.Contains(currentEvent.mousePosition)) {
+                folded = !folded;
+                currentEvent.Use();
+            }
+            return folded;
+        }
     }
 }

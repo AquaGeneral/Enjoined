@@ -35,7 +35,7 @@ namespace JesseStiller.Enjoined {
         public override void OnInspectorGUI() {
             serializedObject.Update();
 
-            DrawSerializedProperties(connectedBody, axis, anchor);
+            DrawSerializedProperties(connectedBody, anchor, axis);
             
             GUIUtilities.DrawConnectedAnchorProperty(connectedAnchor, autoConfigureConnectedAnchor);
 
@@ -43,10 +43,13 @@ namespace JesseStiller.Enjoined {
 
             MultiPropertyField("Linear Motion", new GUIContent[] { new GUIContent("X"), new GUIContent("Y"), new GUIContent("Z") }, xMotion, yMotion, zMotion);
 
-            MultiPropertyField("Angular Motion", new GUIContent[] { new GUIContent("X"), new GUIContent("Y"), new GUIContent("Z") }, angularXMotion, angularYMotion, angularZMotion);
-
+            /**
+            * Linear Limit
+            */
+            EditorGUI.indentLevel = 1;
+            EditorGUILayout.LabelField("Test");
             EditorGUI.BeginChangeCheck();
-            linearLimitFoldoutState = EditorGUILayout.Foldout(linearLimitFoldoutState, "Linear Limit");
+            linearLimitFoldoutState = GUIUtilities.FullClickRegionFoldout("Linear Limit", linearLimitFoldoutState);
             SoftJointLimit linearLimitSoftJointLimit = new SoftJointLimit();
             SoftJointLimitSpring linearLimitSpring = new SoftJointLimitSpring();
             if(linearLimitFoldoutState) {
@@ -63,13 +66,32 @@ namespace JesseStiller.Enjoined {
                 joint.linearLimit = linearLimitSoftJointLimit;
                 joint.linearLimitSpring = linearLimitSpring;
             }
+            EditorGUI.indentLevel = 0;
+
+            MultiPropertyField("Angular Motion", new GUIContent[] { new GUIContent("X"), new GUIContent("Y"), new GUIContent("Z") }, angularXMotion, angularYMotion, angularZMotion);
             
-            EditorGUILayout.Space();
-            EditorGUILayout.Space();
-            
+            /**
+            * Angular Limit
+            */
+            DrawSerializedProperties(angularXLimitSpring, lowAngularXLimit, highAngularXLimit, angularYLimit, angularYZLimitSpring, angularYLimit, angularZLimit);
+
+            /**
+            * Rotation Drive
+            */
+            DrawSerializedProperties(rotationDriveMode);
+            EditorGUI.indentLevel = 1;
+            if((RotationDriveMode)rotationDriveMode.enumValueIndex == RotationDriveMode.XYAndZ) {
+                DrawSerializedProperties(angularXDrive, angularYZDrive);
+            } else {
+                DrawSerializedProperties(slerpDrive);
+            }
+            EditorGUI.indentLevel = 0;
+
             serializedObject.ApplyModifiedProperties();
 
-            base.OnInspectorGUI();
+            GUILayout.Space(100f);
+
+            DrawDefaultInspector();
         }
         
         private void DrawSerializedProperties(params SerializedProperty[] properties) {
