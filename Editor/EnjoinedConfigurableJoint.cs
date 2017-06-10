@@ -47,7 +47,6 @@ namespace JesseStiller.Enjoined {
             * Linear Limit
             */
             EditorGUI.indentLevel = 1;
-            EditorGUILayout.LabelField("Test");
             EditorGUI.BeginChangeCheck();
             linearLimitFoldoutState = GUIUtilities.FullClickRegionFoldout("Linear Limit", linearLimitFoldoutState);
             SoftJointLimit linearLimitSoftJointLimit = new SoftJointLimit();

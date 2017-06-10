@@ -43,9 +43,8 @@ namespace JesseStiller.Enjoined {
         }
 
         internal static bool FullClickRegionFoldout(string header, bool folded) {
-            EditorGUILayout.Foldout(true, "Test");
-
             Rect controlRect= EditorGUILayout.GetControlRect();
+            controlRect.x += 3;
             Rect clickRect = new Rect(controlRect);
             float defaultLeftMargin = clickRect.xMin;
             clickRect.xMin = 0f;
