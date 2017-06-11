@@ -46,26 +46,25 @@ namespace JesseStiller.Enjoined {
             /**
             * Linear Limit
             */
-            EditorGUI.indentLevel = 1;
+            if(joint.xMotion != ConfigurableJointMotion.Limited && joint.yMotion != ConfigurableJointMotion.Limited && joint.zMotion != ConfigurableJointMotion.Limited) {
+                EditorGUILayout.HelpBox("The following linear limits are only used when at least one axis of Linear Motion is set to Limited", MessageType.Info);
+            }
+
             EditorGUI.BeginChangeCheck();
-            linearLimitFoldoutState = GUIUtilities.FullClickRegionFoldout("Linear Limit", linearLimitFoldoutState);
             SoftJointLimit linearLimitSoftJointLimit = new SoftJointLimit();
             SoftJointLimitSpring linearLimitSpring = new SoftJointLimitSpring();
-            if(linearLimitFoldoutState) {
-                EditorGUI.indentLevel = 1;
-                linearLimitSoftJointLimit.limit = EditorGUILayout.FloatField("Limit", joint.linearLimit.limit);
-                linearLimitSoftJointLimit.bounciness = EditorGUILayout.FloatField("Bounciness", joint.linearLimit.bounciness);
-                linearLimitSoftJointLimit.contactDistance = EditorGUILayout.FloatField("Contact Distance", joint.linearLimit.contactDistance);
-                linearLimitSpring.spring = EditorGUILayout.FloatField("Spring", joint.linearLimitSpring.spring);
-                linearLimitSpring.damper = EditorGUILayout.FloatField("Damper", joint.linearLimitSpring.damper);
-                EditorGUI.indentLevel = 0;
-            }
+            EditorGUI.indentLevel = 1;
+            linearLimitSoftJointLimit.limit = EditorGUILayout.FloatField("Displacement Limit", joint.linearLimit.limit);
+            linearLimitSoftJointLimit.bounciness = EditorGUILayout.FloatField("Bounciness", joint.linearLimit.bounciness);
+            linearLimitSoftJointLimit.contactDistance = EditorGUILayout.FloatField("Contact Distance", joint.linearLimit.contactDistance);
+            linearLimitSpring.spring = EditorGUILayout.FloatField("Spring Force", joint.linearLimitSpring.spring);
+            linearLimitSpring.damper = EditorGUILayout.FloatField("Damper", joint.linearLimitSpring.damper);
+            EditorGUI.indentLevel = 0;
             if(EditorGUI.EndChangeCheck()) {
                 Undo.RecordObject(joint, "Inspector");
                 joint.linearLimit = linearLimitSoftJointLimit;
                 joint.linearLimitSpring = linearLimitSpring;
             }
-            EditorGUI.indentLevel = 0;
 
             MultiPropertyField("Angular Motion", new GUIContent[] { new GUIContent("X"), new GUIContent("Y"), new GUIContent("Z") }, angularXMotion, angularYMotion, angularZMotion);
             
@@ -110,7 +109,7 @@ namespace JesseStiller.Enjoined {
             float lastLabelWidth = EditorGUIUtility.labelWidth;
             EditorGUIUtility.labelWidth = 13f;
 
-            Rect cellRect = new Rect(fillRect.x, fillRect.y, propertyCellWidth, fillRect.height);
+            Rect cellRect = new Rect(fillRect.x - 1, fillRect.y, propertyCellWidth, fillRect.height);
             for(int i = 0; i < properties.Length; i++) { 
                 EditorGUI.PropertyField(cellRect, properties[i], propertyLabels[i]);
                 cellRect.x += propertyCellWidth + 2f;
