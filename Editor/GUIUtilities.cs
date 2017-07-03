@@ -9,10 +9,17 @@ using UnityEngine;
 
 namespace JesseStiller.Enjoined {
     public static class GUIUtilities {
+        private static readonly GUIContent[] anchorTypesGUIContent = new GUIContent[] { new GUIContent("User"), new GUIContent("Automatic") };
+
         public static void DrawConnectedAnchorProperty(SerializedProperty connectedAnchor, SerializedProperty autoConfigureConnectedAnchor) {
-            Rect controlRect2 = EditorGUILayout.GetControlRect();
-            Rect fillRect2 = EditorGUI.PrefixLabel(controlRect2, new GUIContent("Connected Anchor Mode"));
-            autoConfigureConnectedAnchor.boolValue = GUI.Toolbar(fillRect2, autoConfigureConnectedAnchor.boolValue ? 1 : 0, new GUIContent[] { new GUIContent("User"), new GUIContent("Automatic") }, EditorStyles.radioButton) == 1;
+            Rect controlRect = EditorGUILayout.GetControlRect();
+            Rect fillRect = EditorGUI.PrefixLabel(controlRect, new GUIContent("Connected Anchor Mode"));
+            fillRect.y -= 1f;
+            // HACK: For some reason the x-axis position and width are being sub-pixel for some reason, so round them to whole numbers
+            fillRect.x = Mathf.Round(fillRect.x);
+            fillRect.width = Mathf.Round(fillRect.width);
+            
+            autoConfigureConnectedAnchor.boolValue = GUI.Toolbar(fillRect, autoConfigureConnectedAnchor.boolValue ? 1 : 0, anchorTypesGUIContent, EditorStyles.radioButton) == 1;
             using(new EditorGUI.DisabledGroupScope(autoConfigureConnectedAnchor.boolValue)) {
                 EditorGUI.indentLevel = 1;
                 EditorGUILayout.PropertyField(connectedAnchor);
