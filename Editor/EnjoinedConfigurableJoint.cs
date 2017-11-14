@@ -46,7 +46,9 @@ namespace JesseStiller.Enjoined {
             /**
             * Linear Limit
             */
-            if(joint.xMotion != ConfigurableJointMotion.Limited && joint.yMotion != ConfigurableJointMotion.Limited && joint.zMotion != ConfigurableJointMotion.Limited) {
+            if(joint.xMotion != ConfigurableJointMotion.Limited && joint.yMotion != ConfigurableJointMotion.Limited && joint.zMotion != ConfigurableJointMotion.Limited &&
+                (joint.linearLimit.limit != 0f || joint.linearLimit.bounciness != 0f || joint.linearLimit.contactDistance != 0f || joint.linearLimitSpring.spring != 0f ||
+                joint.linearLimitSpring.damper != 0f)) {
                 EditorGUILayout.HelpBox("The following linear limits are only used when at least one axis of Linear Motion is set to Limited", MessageType.Info);
             }
 

@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace JesseStiller.Enjoined {
     public static class GUIUtilities {
-        private static readonly GUIContent[] anchorTypesGUIContent = new GUIContent[] { new GUIContent("User"), new GUIContent("Automatic") };
+        private static readonly GUIContent[] anchorTypesGUIContent = new GUIContent[] { new GUIContent("Custom"), new GUIContent("Automatic") };
 
         public static void DrawConnectedAnchorProperty(SerializedProperty connectedAnchor, SerializedProperty autoConfigureConnectedAnchor) {
             Rect controlRect = EditorGUILayout.GetControlRect();

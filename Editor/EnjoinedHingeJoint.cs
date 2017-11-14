@@ -10,26 +10,25 @@ namespace JesseStiller.Enjoined {
     [CanEditMultipleObjects]
     [CustomEditor(typeof(HingeJoint))]
     public class EnjoinedHingeJoint : Editor {
-        private SerializedProperty connectedAnchor, autoConfigureConnectedAnchor, useSpring, spring;
+        private SerializedProperty connectedAnchor, autoConfigureConnectedAnchor, useSpring, spring, useMotor, motor, useLimits, limits;
 
         private void OnEnable() {
             connectedAnchor = serializedObject.FindProperty("m_ConnectedAnchor");
             autoConfigureConnectedAnchor = serializedObject.FindProperty("m_AutoConfigureConnectedAnchor");
             useSpring = serializedObject.FindProperty("m_UseSpring");
             spring = serializedObject.FindProperty("m_Spring");
+            useMotor = serializedObject.FindProperty("m_UseMotor");
+            motor = serializedObject.FindProperty("m_Motor");
+            useLimits = serializedObject.FindProperty("m_UseLimits");
+            limits = serializedObject.FindProperty("m_Limits");
         }
 
         public override void OnInspectorGUI() {
-            base.OnInspectorGUI();
-
-            GUILayout.Space(20f);
-
-            /**
-            * Currently the only difference is that the connectedAnchor vector field is greyed out if autoConfigureConnectedAnchor is true
-            */
             serializedObject.Update();
             SerializedProperty iterator = serializedObject.GetIterator();
             for(bool enterChildren = true; iterator.NextVisible(enterChildren); enterChildren = false) {
+                SubPropertyOperator subPropertyOperator;
+
                 switch(iterator.propertyPath) {
                     case "m_AutoConfigureConnectedAnchor":
                         break;
@@ -37,13 +36,12 @@ namespace JesseStiller.Enjoined {
                         GUIUtilities.DrawConnectedAnchorProperty(connectedAnchor, autoConfigureConnectedAnchor);
                         break;
                     case "m_UseSpring":
-                        useSpring.boolValue = EditorGUILayout.ToggleLeft("Spring", useSpring.boolValue);
+                        useSpring.boolValue = EditorGUILayout.Toggle("Spring", useSpring.boolValue);
                         break;
                     case "m_Spring":
                         EditorGUI.indentLevel = 1;
-                        SubPropertyOperator subPropertyOperator = new SubPropertyOperator(iterator);
+                        subPropertyOperator = new SubPropertyOperator(iterator);
                         while(subPropertyOperator.MoveNext()) {
-                            Debug.Log(subPropertyOperator.iterator.propertyPath);
                             switch(subPropertyOperator.iterator.propertyPath) {
                                 case "m_Spring.spring":
                                     EditorGUILayout.PropertyField(subPropertyOperator.iterator, new GUIContent("Force"));
@@ -54,7 +52,33 @@ namespace JesseStiller.Enjoined {
                             }
                         }
                         EditorGUI.indentLevel = 0;
+                        break;
+                    case "m_UseMotor":
+                        useMotor.boolValue = EditorGUILayout.Toggle("Motor", useMotor.boolValue);
+                        break;
+                    case "m_Motor":
+                        EditorGUI.indentLevel = 1;
+                        GUIUtilities.PropertyFieldWithoutHeader(motor);
+                        EditorGUI.indentLevel = 0;
+                        break;
+                    case "m_UseLimits":
+                        useLimits.boolValue = EditorGUILayout.Toggle("Limits", useLimits.boolValue);
+                        break;
+                    case "m_Limits":
+                        EditorGUI.indentLevel = 1;
+                        subPropertyOperator = new SubPropertyOperator(iterator);
+                        while(subPropertyOperator.MoveNext()) {
+                            EditorGUILayout.PropertyField(subPropertyOperator.iterator);
 
+                            // Clamp the min and max limit properties only to -180 to 180
+                            switch(subPropertyOperator.iterator.propertyPath) {
+                                case "m_Limits.min":
+                                case "m_Limits.max":
+                                    subPropertyOperator.iterator.floatValue = Mathf.Clamp(subPropertyOperator.iterator.floatValue, -180f, 180f);
+                                    break;
+                            }
+                        }
+                        EditorGUI.indentLevel = 0;
                         break;
                     default:
                         EditorGUILayout.PropertyField(iterator, true, null);
