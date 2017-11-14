@@ -49,6 +49,15 @@ namespace JesseStiller.Enjoined {
             }
         }
 
+        internal static void PropertyFieldWithoutHeader(SerializedProperty serializedProperty) {
+            serializedProperty = serializedProperty.Copy();
+            SerializedProperty endProperty = serializedProperty.GetEndProperty();
+            bool enterChildren = true;
+            while(serializedProperty.NextVisible(enterChildren) && !SerializedProperty.EqualContents(serializedProperty, endProperty)) { 
+                EditorGUILayout.PropertyField(serializedProperty);
+            }
+        }
+        
         internal static bool FullClickRegionFoldout(string header, bool folded) {
             Rect controlRect= EditorGUILayout.GetControlRect();
             controlRect.x += 3;

@@ -87,7 +87,7 @@ namespace JesseStiller.Enjoined {
 
             serializedObject.ApplyModifiedProperties();
 
-            GUILayout.Space(100f);
+            GUILayout.Space(40f);
 
             DrawDefaultInspector();
         }
