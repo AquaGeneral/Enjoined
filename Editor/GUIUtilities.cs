@@ -27,6 +27,43 @@ namespace JesseStiller.Enjoined {
             }
         }
 
+        /// <summary>
+        /// An EditorGUI control with a label, a min/max slider and min/max float fields.
+        /// </summary>
+        /// <returns>Returns a bool indicating if the controls' min/max values have changed or not.</returns>
+        internal static bool MinMaxWithFloatFields(string label, ref float minValue, ref float maxValue, float minValueBoundary, float maxValueBoundary, int significantDigits) {
+            Rect controlRect = EditorGUILayout.GetControlRect();
+
+            Rect labelRect = new Rect(controlRect);
+            labelRect.xMax = EditorGUIUtility.labelWidth + 14;
+            labelRect.yMin -= 1f;
+            EditorGUI.LabelField(labelRect, label);
+
+            EditorGUI.BeginChangeCheck();
+            Rect fillRect = new Rect(controlRect);
+            fillRect.xMin = EditorGUIUtility.labelWidth;
+
+            Rect leftRect = new Rect(fillRect);
+            leftRect.xMax = leftRect.xMin + 50f;
+            minValue = Utilities.FloorToSignificantDigits(Mathf.Clamp(EditorGUI.FloatField(leftRect, minValue), minValueBoundary, maxValueBoundary), significantDigits);
+
+            Rect middleRect = new Rect(fillRect);
+            middleRect.xMin = leftRect.xMin + 40;
+            middleRect.xMax = fillRect.xMax - 40f;
+            middleRect.y -= 2;
+            EditorGUI.MinMaxSlider(middleRect, ref minValue, ref maxValue, minValueBoundary, maxValueBoundary);
+
+            Rect rightRect = new Rect(fillRect);
+            rightRect.xMin = rightRect.xMax - 50;
+            maxValue = Utilities.FloorToSignificantDigits(Mathf.Clamp(EditorGUI.FloatField(rightRect, maxValue), minValueBoundary, maxValueBoundary), significantDigits);
+            return EditorGUI.EndChangeCheck();
+        }
+
+        internal static void MinMaxPropertyFields(string label, SerializedProperty minProperty, SerializedProperty maxProperty) {
+            Rect controlRect = EditorGUILayout.GetControlRect();
+
+        }
+        
         internal static void ToggleAndFill(Action<Rect> toggleControl, Action<Rect> fillControl, bool enableFillControl, bool enableToggle) {
             Rect controlRect = EditorGUILayout.GetControlRect();
 

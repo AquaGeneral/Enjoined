@@ -3,6 +3,7 @@
 * License: Mozilla Public License Version 2.0 (https://www.mozilla.org/en-US/MPL/2.0/)
 */
 
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -11,17 +12,20 @@ namespace JesseStiller.Enjoined {
     [CanEditMultipleObjects]
     [CustomEditor(typeof(ConfigurableJoint))]
     public class EnjoinedConfigurableJoint : Editor {
-        // Joint properties
-        private SerializedProperty connectedBody, axis, anchor, autoConfigureConnectedAnchor, connectedAnchor, breakForce, breakTorque, enableCollision, enablePreprocessing;
-
-        // Configurable Joint properties
-        private SerializedProperty projectionAngle, projectionDistance, projectionMode, slerpDrive, angularYZDrive, angularXDrive, rotationDriveMode, targetAngularVelocity, targetRotation, zDrive, yDrive, xDrive, targetVelocity, targetPosition, angularZLimit, angularYLimit, highAngularXLimit, lowAngularXLimit, linearLimit, linearLimitSpring, angularYZLimitSpring, angularXLimitSpring, angularXMotion, angularYMotion, angularZMotion, zMotion, yMotion, xMotion, secondaryAxis, configuredInWorldSpace, swapBodies;
         private bool linearLimitFoldoutState = false;
-
+        
         private ConfigurableJoint joint;
+
+        private Dictionary<string, SerializedProperty> properties = new Dictionary<string, SerializedProperty>();
 
         private void OnEnable() {
             joint = (ConfigurableJoint)serializedObject.targetObject;
+
+            SerializedProperty iterator = serializedObject.GetIterator();
+            while(iterator.Next(true)) {
+                // Remove the initial "m_" prefix
+                properties.Add(iterator.propertyPath.Remove(0, 2), iterator.Copy());
+            }
 
             FieldInfo[] fields = typeof(EnjoinedConfigurableJoint).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
             foreach(FieldInfo fieldInfo in fields) {
@@ -35,13 +39,13 @@ namespace JesseStiller.Enjoined {
         public override void OnInspectorGUI() {
             serializedObject.Update();
 
-            DrawSerializedProperties(connectedBody, anchor, axis);
+            DrawSerializedProperties("ConnectedBody", "Anchor", "Axis");
             
-            GUIUtilities.DrawConnectedAnchorProperty(connectedAnchor, autoConfigureConnectedAnchor);
+            GUIUtilities.DrawConnectedAnchorProperty(properties["ConnectedAnchor"], properties["AutoConfigureConnectedAnchor"]);
 
-            EditorGUILayout.PropertyField(secondaryAxis);
+            EditorGUILayout.PropertyField(properties["SecondaryAxis"]);
 
-            MultiPropertyField("Linear Motion", new GUIContent[] { new GUIContent("X"), new GUIContent("Y"), new GUIContent("Z") }, xMotion, yMotion, zMotion);
+            MultiPropertyField("Linear Motion", new GUIContent[] { new GUIContent("X"), new GUIContent("Y"), new GUIContent("Z") }, properties["XMotion"], properties["YMotion"], properties["ZMotion"]);
 
             /**
             * Linear Limit
@@ -68,22 +72,32 @@ namespace JesseStiller.Enjoined {
                 joint.linearLimitSpring = linearLimitSpring;
             }
 
-            MultiPropertyField("Angular Motion", new GUIContent[] { new GUIContent("X"), new GUIContent("Y"), new GUIContent("Z") }, angularXMotion, angularYMotion, angularZMotion);
-            
+            MultiPropertyField("Angular Motion", new GUIContent[] { new GUIContent("X"), new GUIContent("Y"), new GUIContent("Z") }, properties["AngularXMotion"], properties["AngularYMotion"], properties["AngularZMotion"]);
+
             /**
             * Angular Limit
             */
-            DrawSerializedProperties(angularXLimitSpring, lowAngularXLimit, highAngularXLimit, angularYLimit, angularYZLimitSpring, angularYLimit, angularZLimit);
-
+            //DrawSerializedProperties(angularXLimitSpring, lowAngularXLimit, highAngularXLimit, angularYLimit, angularYZLimitSpring, angularYLimit, angularZLimit);
+            EditorGUILayout.PrefixLabel("X-axis Angular Limit");
+            EditorGUI.indentLevel = 1;
+            float newLowerLimitValue = joint.lowAngularXLimit.limit;
+            float newUpperLimitValue = joint.highAngularXLimit.limit;
+            if(GUIUtilities.MinMaxWithFloatFields("Angle", ref newLowerLimitValue, ref newUpperLimitValue, -180f, 180f, 3)) {
+                properties["LowAngularXLimit.limit"].floatValue = newLowerLimitValue;
+                properties["HighAngularXLimit.limit"].floatValue = newUpperLimitValue;
+            }
+            MultiPropertyField("Bounciness", new string[] { "min", "max" }, properties["LowAngularXLimit.bounciness"], properties["HighAngularXLimit.bounciness"]);
+            EditorGUI.indentLevel = 0;
+            
             /**
             * Rotation Drive
             */
-            DrawSerializedProperties(rotationDriveMode);
+            DrawSerializedProperties("RotationDriveMode");
             EditorGUI.indentLevel = 1;
-            if((RotationDriveMode)rotationDriveMode.enumValueIndex == RotationDriveMode.XYAndZ) {
-                DrawSerializedProperties(angularXDrive, angularYZDrive);
+            if((RotationDriveMode)properties["RotationDriveMode"].enumValueIndex == RotationDriveMode.XYAndZ) {
+                DrawSerializedProperties("AngularXDrive", "AngularYZDrive");
             } else {
-                DrawSerializedProperties(slerpDrive);
+                DrawSerializedProperties("SlerpDrive");
             }
             EditorGUI.indentLevel = 0;
 
@@ -94,10 +108,30 @@ namespace JesseStiller.Enjoined {
             DrawDefaultInspector();
         }
         
-        private void DrawSerializedProperties(params SerializedProperty[] properties) {
-            foreach(SerializedProperty property in properties) {
-                EditorGUILayout.PropertyField(property, true, null);
+        private void DrawSerializedProperties(params string[] propertyNames) {
+            foreach(string propertyName in propertyNames) {
+                EditorGUILayout.PropertyField(properties[propertyName], true, null);
             }
+        }
+
+        private static void MultiPropertyField(string label, string[] propertyLabels, params SerializedProperty[] properties) {
+            Debug.Assert(propertyLabels.Length == properties.Length);
+
+            Rect controlRect = EditorGUILayout.GetControlRect();
+
+            Rect fillRect = EditorGUI.PrefixLabel(controlRect, new GUIContent(label));
+            float propertyCellWidth = (fillRect.width - (properties.Length - 1f) * 2f) / properties.Length;
+
+            float lastLabelWidth = EditorGUIUtility.labelWidth;
+            EditorGUIUtility.labelWidth = 13f;
+
+            Rect cellRect = new Rect(fillRect.x - 1, fillRect.y, propertyCellWidth, fillRect.height);
+            for(int i = 0; i < properties.Length; i++) {
+                EditorGUI.PropertyField(cellRect, properties[i], new GUIContent(propertyLabels[i]));
+                cellRect.x += propertyCellWidth + 2f;
+            }
+
+            EditorGUIUtility.labelWidth = lastLabelWidth;
         }
 
         private static void MultiPropertyField(string label, GUIContent[] propertyLabels, params SerializedProperty[] properties) {
