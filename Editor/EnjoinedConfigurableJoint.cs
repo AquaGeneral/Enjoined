@@ -75,20 +75,24 @@ namespace JesseStiller.Enjoined {
             MultiPropertyField("Angular Motion", new GUIContent[] { new GUIContent("X"), new GUIContent("Y"), new GUIContent("Z") }, properties["AngularXMotion"], properties["AngularYMotion"], properties["AngularZMotion"]);
 
             /**
-            * Angular Limit
+            * X-axis Angular Limit
             */
-            //DrawSerializedProperties(angularXLimitSpring, lowAngularXLimit, highAngularXLimit, angularYLimit, angularYZLimitSpring, angularYLimit, angularZLimit);
             EditorGUILayout.PrefixLabel("X-axis Angular Limit");
             EditorGUI.indentLevel = 1;
-            float newLowerLimitValue = joint.lowAngularXLimit.limit;
-            float newUpperLimitValue = joint.highAngularXLimit.limit;
-            if(GUIUtilities.MinMaxWithFloatFields("Angle", ref newLowerLimitValue, ref newUpperLimitValue, -180f, 180f, 3)) {
-                properties["LowAngularXLimit.limit"].floatValue = newLowerLimitValue;
-                properties["HighAngularXLimit.limit"].floatValue = newUpperLimitValue;
-            }
-            MultiPropertyField("Bounciness", new string[] { "min", "max" }, properties["LowAngularXLimit.bounciness"], properties["HighAngularXLimit.bounciness"]);
+            GUIUtilities.MinMaxWithFloatFields("Angle", properties["LowAngularXLimit.limit"], properties["HighAngularXLimit.limit"], -180f, 180f, 3);
+            // TODO: Does the max bounciness and contact distance values actually ever get used? Is the lower/high angular limit distinction only for the joint angle limit?
+            GUIUtilities.MinMaxWithFloatFields("Bounciness", properties["LowAngularXLimit.bounciness"], properties["HighAngularXLimit.bounciness"], 0f, 1f, 10);
+            MinMaxPropertyFieldsControl("Contact Distance", properties["LowAngularXLimit.contactDistance"], properties["HighAngularXLimit.contactDistance"]);
+            EditorGUILayout.PropertyField(properties["AngularXLimitSpring.spring"], new GUIContent("Spring Force"));
+            DrawSerializedProperties("AngularXLimitSpring.damper");
             EditorGUI.indentLevel = 0;
-            
+
+            //DrawSerializedProperties(angularXLimitSpring, lowAngularXLimit, highAngularXLimit, angularYLimit, angularYZLimitSpring, angularYLimit, angularZLimit);
+            EditorGUILayout.PrefixLabel("Y-axis Angular Limit");
+            EditorGUI.indentLevel = 1;
+
+            EditorGUI.indentLevel = 0;
+
             /**
             * Rotation Drive
             */
@@ -101,7 +105,11 @@ namespace JesseStiller.Enjoined {
             }
             EditorGUI.indentLevel = 0;
 
+            DrawSerializedProperties("ProjectionMode", "ProjectionDistance", "ProjectionAngle", "ConfiguredInWorldSpace", "SwapBodies", "BreakForce", "BreakTorque", "EnableCollision", "EnablePreprocessing", "MassScale", "ConnectedMassScale");
+
             serializedObject.ApplyModifiedProperties();
+
+
 
             GUILayout.Space(40f);
 
@@ -114,24 +122,20 @@ namespace JesseStiller.Enjoined {
             }
         }
 
-        private static void MultiPropertyField(string label, string[] propertyLabels, params SerializedProperty[] properties) {
-            Debug.Assert(propertyLabels.Length == properties.Length);
-
+        private static void MinMaxPropertyFieldsControl(string label, SerializedProperty minProperty, SerializedProperty maxProperty) {
             Rect controlRect = EditorGUILayout.GetControlRect();
 
             Rect fillRect = EditorGUI.PrefixLabel(controlRect, new GUIContent(label));
-            float propertyCellWidth = (fillRect.width - (properties.Length - 1f) * 2f) / properties.Length;
 
-            float lastLabelWidth = EditorGUIUtility.labelWidth;
-            EditorGUIUtility.labelWidth = 13f;
+            Rect minRect = new Rect(fillRect.x, fillRect.y, fillRect.width * 0.5f - 5f, fillRect.height);
+            GUI.Label(new Rect(minRect.x, minRect.y, 25f, minRect.height), "min");
+            minRect.xMin += 19f;
+            EditorGUI.PropertyField(minRect, maxProperty, GUIContent.none);
 
-            Rect cellRect = new Rect(fillRect.x - 1, fillRect.y, propertyCellWidth, fillRect.height);
-            for(int i = 0; i < properties.Length; i++) {
-                EditorGUI.PropertyField(cellRect, properties[i], new GUIContent(propertyLabels[i]));
-                cellRect.x += propertyCellWidth + 2f;
-            }
-
-            EditorGUIUtility.labelWidth = lastLabelWidth;
+            Rect maxRect = new Rect(fillRect.x + fillRect.width * 0.5f + 5f, fillRect.y, fillRect.width * 0.5f - 5f, fillRect.height);
+            GUI.Label(new Rect(maxRect.x, maxRect.y, 28f, maxRect.height), "max");
+            maxRect.xMin += 21f;
+            EditorGUI.PropertyField(maxRect, maxProperty, GUIContent.none);
         }
 
         private static void MultiPropertyField(string label, GUIContent[] propertyLabels, params SerializedProperty[] properties) {

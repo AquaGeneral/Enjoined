@@ -31,32 +31,34 @@ namespace JesseStiller.Enjoined {
         /// An EditorGUI control with a label, a min/max slider and min/max float fields.
         /// </summary>
         /// <returns>Returns a bool indicating if the controls' min/max values have changed or not.</returns>
-        internal static bool MinMaxWithFloatFields(string label, ref float minValue, ref float maxValue, float minValueBoundary, float maxValueBoundary, int significantDigits) {
+        internal static void MinMaxWithFloatFields(string label, SerializedProperty minValue, SerializedProperty maxValue, float minValueBoundary, float maxValueBoundary, int significantDigits) {
             Rect controlRect = EditorGUILayout.GetControlRect();
 
             Rect labelRect = new Rect(controlRect);
             labelRect.xMax = EditorGUIUtility.labelWidth + 14;
             labelRect.yMin -= 1f;
             EditorGUI.LabelField(labelRect, label);
-
-            EditorGUI.BeginChangeCheck();
+            
             Rect fillRect = new Rect(controlRect);
             fillRect.xMin = EditorGUIUtility.labelWidth;
 
             Rect leftRect = new Rect(fillRect);
             leftRect.xMax = leftRect.xMin + 50f;
-            minValue = Utilities.FloorToSignificantDigits(Mathf.Clamp(EditorGUI.FloatField(leftRect, minValue), minValueBoundary, maxValueBoundary), significantDigits);
+            minValue.floatValue = Utilities.FloorToSignificantDigits(Mathf.Clamp(EditorGUI.FloatField(leftRect, minValue.floatValue), minValueBoundary, maxValueBoundary), significantDigits);
 
             Rect middleRect = new Rect(fillRect);
             middleRect.xMin = leftRect.xMin + 40;
             middleRect.xMax = fillRect.xMax - 40f;
             middleRect.y -= 2;
-            EditorGUI.MinMaxSlider(middleRect, ref minValue, ref maxValue, minValueBoundary, maxValueBoundary);
+            float clonedMinValue = minValue.floatValue;
+            float clonedMaxValue = maxValue.floatValue;
+            EditorGUI.MinMaxSlider(middleRect, ref clonedMinValue, ref clonedMaxValue, minValueBoundary, maxValueBoundary);
+            minValue.floatValue = clonedMinValue;
+            maxValue.floatValue = clonedMaxValue;
 
             Rect rightRect = new Rect(fillRect);
             rightRect.xMin = rightRect.xMax - 50;
-            maxValue = Utilities.FloorToSignificantDigits(Mathf.Clamp(EditorGUI.FloatField(rightRect, maxValue), minValueBoundary, maxValueBoundary), significantDigits);
-            return EditorGUI.EndChangeCheck();
+            maxValue.floatValue = Utilities.FloorToSignificantDigits(Mathf.Clamp(EditorGUI.FloatField(rightRect, maxValue.floatValue), minValueBoundary, maxValueBoundary), significantDigits);
         }
 
         internal static void MinMaxPropertyFields(string label, SerializedProperty minProperty, SerializedProperty maxProperty) {
