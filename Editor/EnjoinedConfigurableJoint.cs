@@ -3,6 +3,7 @@
 * License: Mozilla Public License Version 2.0 (https://www.mozilla.org/en-US/MPL/2.0/)
 */
 
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
@@ -72,12 +73,14 @@ namespace JesseStiller.Enjoined {
                 joint.linearLimitSpring = linearLimitSpring;
             }
 
+            EditorGUILayout.LabelField("Angular Limits", EditorStyles.boldLabel);
+
             MultiPropertyField("Angular Motion", new GUIContent[] { new GUIContent("X"), new GUIContent("Y"), new GUIContent("Z") }, properties["AngularXMotion"], properties["AngularYMotion"], properties["AngularZMotion"]);
 
             /**
             * X-axis Angular Limit
             */
-            EditorGUILayout.PrefixLabel("X-axis Angular Limit");
+            EditorGUILayout.LabelField("Angular X Limit");
             EditorGUI.indentLevel = 1;
             GUIUtilities.MinMaxWithFloatFields("Angle", properties["LowAngularXLimit.limit"], properties["HighAngularXLimit.limit"], -180f, 180f, 3);
             // TODO: Does the max bounciness and contact distance values actually ever get used? Is the lower/high angular limit distinction only for the joint angle limit?
@@ -87,35 +90,72 @@ namespace JesseStiller.Enjoined {
             DrawSerializedProperties("AngularXLimitSpring.damper");
             EditorGUI.indentLevel = 0;
 
-            //DrawSerializedProperties(angularXLimitSpring, lowAngularXLimit, highAngularXLimit, angularYLimit, angularYZLimitSpring, angularYLimit, angularZLimit);
-            EditorGUILayout.PrefixLabel("Y-axis Angular Limit");
+            /**
+            * Y-axis Angular Limit
+            */
+            EditorGUILayout.LabelField("Angular Y Limit");
             EditorGUI.indentLevel = 1;
-
+            GUIUtilities.MinMaxWithFloatFields("Angle", properties["AngularYLimit.limit"], properties["AngularYLimit.limit"], -180f, 180f, 3);
+            GUIUtilities.MinMaxWithFloatFields("Bounciness", properties["AngularYLimit.bounciness"], properties["AngularYLimit.bounciness"], -180f, 180f, 3);
+            MinMaxPropertyFieldsControl("Contact Distance", properties["AngularYLimit.contactDistance"], properties["AngularYLimit.contactDistance"]);
             EditorGUI.indentLevel = 0;
+
+            EditorGUILayout.LabelField("Angular Z Limit");
+            EditorGUI.indentLevel = 1;
+            GUIUtilities.MinMaxWithFloatFields("Angle", properties["AngularZLimit.limit"], properties["AngularZLimit.limit"], -180f, 180f, 3);
+            GUIUtilities.MinMaxWithFloatFields("Bounciness", properties["AngularZLimit.bounciness"], properties["AngularZLimit.bounciness"], -180f, 180f, 3);
+            MinMaxPropertyFieldsControl("Contact Distance", properties["AngularZLimit.contactDistance"], properties["AngularZLimit.contactDistance"]);
+            EditorGUI.indentLevel = 0;
+
+            EditorGUILayout.LabelField("Angular YZ Spring");
+            EditorGUI.indentLevel = 1;
+            EditorGUILayout.PropertyField(properties["AngularYZLimitSpring.spring"], new GUIContent("Spring Force"));
+            DrawSerializedProperties("AngularYZLimitSpring.damper");
+            EditorGUI.indentLevel = 0;
+
+            EditorGUILayout.LabelField("Positional Drive", EditorStyles.boldLabel);
+
+            DrawSerializedProperties("TargetPosition", "TargetVelocity");
+            PropertyFieldsWithoutFoldout("XDrive", "YDrive", "ZDrive");
 
             /**
             * Rotation Drive
             */
+            EditorGUILayout.LabelField("Rotational Drive", EditorStyles.boldLabel);
+            DrawSerializedProperties("TargetAngularVelocity");
+            MultiPropertyField("Target Rotation", new GUIContent[] { new GUIContent("X"), new GUIContent("Y"), new GUIContent("Z"), new GUIContent("W") }, 
+                properties["TargetRotation.x"], properties["TargetRotation.y"], properties["TargetRotation.z"], properties["TargetRotation.w"]);
             DrawSerializedProperties("RotationDriveMode");
             EditorGUI.indentLevel = 1;
-            if((RotationDriveMode)properties["RotationDriveMode"].enumValueIndex == RotationDriveMode.XYAndZ) {
-                DrawSerializedProperties("AngularXDrive", "AngularYZDrive");
-            } else {
-                DrawSerializedProperties("SlerpDrive");
-            }
+            PropertyFieldsWithoutFoldout("AngularXDrive", "AngularYZDrive", "SlerpDrive");
+
             EditorGUI.indentLevel = 0;
+
+            EditorGUILayout.LabelField("Miscellaneous", EditorStyles.boldLabel);
 
             DrawSerializedProperties("ProjectionMode", "ProjectionDistance", "ProjectionAngle", "ConfiguredInWorldSpace", "SwapBodies", "BreakForce", "BreakTorque", "EnableCollision", "EnablePreprocessing", "MassScale", "ConnectedMassScale");
 
             serializedObject.ApplyModifiedProperties();
-
-
-
+            
             GUILayout.Space(40f);
 
             DrawDefaultInspector();
         }
-        
+
+        private void PropertyFieldsWithoutFoldout(params string[] serializedPropertyPaths) {
+            foreach(string serializedPropertyPath in serializedPropertyPaths) {
+                SerializedProperty serializedProperty = properties[serializedPropertyPath].Copy();
+                SerializedProperty endProperty = serializedProperty.GetEndProperty();
+                bool enterChildren = true;
+                EditorGUILayout.LabelField(serializedProperty.displayName);
+                EditorGUI.indentLevel++;
+                while(serializedProperty.NextVisible(enterChildren) && !SerializedProperty.EqualContents(serializedProperty, endProperty)) {
+                    EditorGUILayout.PropertyField(serializedProperty);
+                }
+                EditorGUI.indentLevel--;
+            }
+        }
+
         private void DrawSerializedProperties(params string[] propertyNames) {
             foreach(string propertyName in propertyNames) {
                 EditorGUILayout.PropertyField(properties[propertyName], true, null);
