@@ -13,12 +13,11 @@ namespace JesseStiller.Enjoined {
     [CanEditMultipleObjects]
     [CustomEditor(typeof(ConfigurableJoint))]
     public class EnjoinedConfigurableJoint : Editor {
-        private bool linearLimitFoldoutState = false;
-        
+        private readonly string[] xyzStrings = new string[] { "X", "Y", "Z" };
+
         private ConfigurableJoint joint;
-
         private Dictionary<string, SerializedProperty> properties = new Dictionary<string, SerializedProperty>();
-
+        
         private void OnEnable() {
             joint = (ConfigurableJoint)serializedObject.targetObject;
 
@@ -26,14 +25,6 @@ namespace JesseStiller.Enjoined {
             while(iterator.Next(true)) {
                 // Remove the initial "m_" prefix
                 properties.Add(iterator.propertyPath.Remove(0, 2), iterator.Copy());
-            }
-
-            FieldInfo[] fields = typeof(EnjoinedConfigurableJoint).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
-            foreach(FieldInfo fieldInfo in fields) {
-                if(fieldInfo.FieldType != typeof(SerializedProperty)) continue;
-
-                string propertyPath = "m_" + char.ToUpper(fieldInfo.Name[0]) + fieldInfo.Name.Substring(1);
-                fieldInfo.SetValue(this, serializedObject.FindProperty(propertyPath));
             }
         }
 
@@ -46,21 +37,20 @@ namespace JesseStiller.Enjoined {
 
             EditorGUILayout.PropertyField(properties["SecondaryAxis"]);
 
-            MultiPropertyField("Linear Motion", new GUIContent[] { new GUIContent("X"), new GUIContent("Y"), new GUIContent("Z") }, properties["XMotion"], properties["YMotion"], properties["ZMotion"]);
+            EditorGUILayout.LabelField("Linear Limit", EditorStyles.boldLabel);
+            MultiPropertyField("Linear Motion", xyzStrings, properties["XMotion"], properties["YMotion"], properties["ZMotion"]);
 
             /**
             * Linear Limit
             */
-            if(joint.xMotion != ConfigurableJointMotion.Limited && joint.yMotion != ConfigurableJointMotion.Limited && joint.zMotion != ConfigurableJointMotion.Limited &&
-                (joint.linearLimit.limit != 0f || joint.linearLimit.bounciness != 0f || joint.linearLimit.contactDistance != 0f || joint.linearLimitSpring.spring != 0f ||
-                joint.linearLimitSpring.damper != 0f)) {
+            EditorGUI.indentLevel = 1;
+            if(joint.xMotion != ConfigurableJointMotion.Limited && joint.yMotion != ConfigurableJointMotion.Limited && joint.zMotion != ConfigurableJointMotion.Limited) {
                 EditorGUILayout.HelpBox("The following linear limits are only used when at least one axis of Linear Motion is set to Limited", MessageType.Info);
             }
 
             EditorGUI.BeginChangeCheck();
             SoftJointLimit linearLimitSoftJointLimit = new SoftJointLimit();
             SoftJointLimitSpring linearLimitSpring = new SoftJointLimitSpring();
-            EditorGUI.indentLevel = 1;
             linearLimitSoftJointLimit.limit = EditorGUILayout.FloatField("Displacement Limit", joint.linearLimit.limit);
             linearLimitSoftJointLimit.bounciness = EditorGUILayout.FloatField("Bounciness", joint.linearLimit.bounciness);
             linearLimitSoftJointLimit.contactDistance = EditorGUILayout.FloatField("Contact Distance", joint.linearLimit.contactDistance);
@@ -75,7 +65,7 @@ namespace JesseStiller.Enjoined {
 
             EditorGUILayout.LabelField("Angular Limits", EditorStyles.boldLabel);
 
-            MultiPropertyField("Angular Motion", new GUIContent[] { new GUIContent("X"), new GUIContent("Y"), new GUIContent("Z") }, properties["AngularXMotion"], properties["AngularYMotion"], properties["AngularZMotion"]);
+            MultiPropertyField("Angular Motion", xyzStrings, properties["AngularXMotion"], properties["AngularYMotion"], properties["AngularZMotion"]);
 
             /**
             * X-axis Angular Limit
@@ -123,7 +113,7 @@ namespace JesseStiller.Enjoined {
             */
             EditorGUILayout.LabelField("Rotational Drive", EditorStyles.boldLabel);
             DrawSerializedProperties("TargetAngularVelocity");
-            MultiPropertyField("Target Rotation", new GUIContent[] { new GUIContent("X"), new GUIContent("Y"), new GUIContent("Z"), new GUIContent("W") }, 
+            MultiPropertyField("Target Rotation", new string[] { "X", "Y", "Z", "W" }, 
                 properties["TargetRotation.x"], properties["TargetRotation.y"], properties["TargetRotation.z"], properties["TargetRotation.w"]);
             DrawSerializedProperties("RotationDriveMode");
             EditorGUI.indentLevel = 1;
@@ -136,10 +126,6 @@ namespace JesseStiller.Enjoined {
             DrawSerializedProperties("ProjectionMode", "ProjectionDistance", "ProjectionAngle", "ConfiguredInWorldSpace", "SwapBodies", "BreakForce", "BreakTorque", "EnableCollision", "EnablePreprocessing", "MassScale", "ConnectedMassScale");
 
             serializedObject.ApplyModifiedProperties();
-            
-            GUILayout.Space(40f);
-
-            DrawDefaultInspector();
         }
 
         private void PropertyFieldsWithoutFoldout(params string[] serializedPropertyPaths) {
@@ -178,7 +164,7 @@ namespace JesseStiller.Enjoined {
             EditorGUI.PropertyField(maxRect, maxProperty, GUIContent.none);
         }
 
-        private static void MultiPropertyField(string label, GUIContent[] propertyLabels, params SerializedProperty[] properties) {
+        private static void MultiPropertyField(string label, string[] propertyLabels, params SerializedProperty[] properties) {
             Debug.Assert(propertyLabels.Length == properties.Length);
 
             Rect controlRect = EditorGUILayout.GetControlRect();
@@ -190,8 +176,8 @@ namespace JesseStiller.Enjoined {
             EditorGUIUtility.labelWidth = 13f;
 
             Rect cellRect = new Rect(fillRect.x - 1, fillRect.y, propertyCellWidth, fillRect.height);
-            for(int i = 0; i < properties.Length; i++) { 
-                EditorGUI.PropertyField(cellRect, properties[i], propertyLabels[i]);
+            for(int i = 0; i < properties.Length; i++) {
+                EditorGUI.PropertyField(cellRect, properties[i], new GUIContent(propertyLabels[i]));
                 cellRect.x += propertyCellWidth + 2f;
             }
 
