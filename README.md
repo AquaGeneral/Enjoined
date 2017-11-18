@@ -6,8 +6,6 @@ Enjoined sets out to simplify and streamline the 3D joint editors in Unity.
 
 [<img src="https://github.com/AquaGeneral/Enjoined/raw/images/EnjoinedConfigurableJointTeaser.png" width="906" height="658"/>](https://github.com/AquaGeneral/Enjoined/raw/images/EnjoinedConfigurableJoint.png)
 
-[![](https://github.com/AquaGeneral/Enjoined/raw/images/EnjoinedConfigurableJointTeaser.png =906x658)](https://github.com/AquaGeneral/Enjoined/raw/images/EnjoinedConfigurableJoint.png)
-
 Enjoined fixes all of the following things:
 * All fields are displayed as a formatted version of their API name, which might be okay in a programming environment they aren't always descriptive or indicative enough.
 * Joint limits sometimes refer to "rotational limits" in degrees, or "positional limits" in units (meters if you're using PhysX),
